@@ -1,4 +1,6 @@
-use chrono::{DateTime, Days, Duration, Local, NaiveTime};
+use std::time::Duration;
+
+use chrono::{DateTime, Days, Local, NaiveTime, TimeDelta};
 use gpui::*;
 use ui::v_flex;
 
@@ -9,7 +11,7 @@ pub struct Countdown {
 }
 
 impl Countdown {
-    fn get_duration(&self) -> Duration {
+    fn get_duration(&self) -> TimeDelta {
         let now = Local::now();
         let mut time = self.time;
         if time < now {
@@ -27,7 +29,18 @@ impl Countdown {
 }
 
 impl Render for Countdown {
-    fn render(&mut self, _cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+        cx.spawn(|this, mut cx| async move {
+            cx.background_executor()
+                .timer(Duration::from_secs(60))
+                .await;
+            this.update(&mut cx, |_this, cx| {
+                cx.notify();
+            })
+            .ok()
+        })
+        .detach();
+
         v_flex()
             .justify_center()
             .items_center()
