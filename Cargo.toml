@@ -11,3 +11,4 @@ ui = { git = "https://github.com/zed-industries/zed" }
 settings = { git = "https://github.com/zed-industries/zed" }
 theme = { git = "https://github.com/zed-industries/zed" }
 chrono = "0.4.38"
+clap = { version = "4.5.17", features = ["derive"] }

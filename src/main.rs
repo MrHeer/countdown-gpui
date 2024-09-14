@@ -1,11 +1,26 @@
 mod countdown;
 mod utils;
 
+use clap::Parser;
 use countdown::Countdown;
 use gpui::*;
 
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    /// set hour for timer
+    #[arg(long, default_value_t = 8)]
+    hour: u32,
+
+    /// set minute for timer
+    #[arg(long, default_value_t = 0)]
+    minute: u32,
+}
+
 fn main() {
-    App::new().run(|cx: &mut AppContext| {
+    let args = Args::parse();
+
+    App::new().run(move |cx: &mut AppContext| {
         settings::init(cx);
         theme::init(theme::LoadThemes::JustBase, cx);
         let window_size = size(px(300.0), px(300.0));
@@ -22,7 +37,7 @@ fn main() {
                 window_background: WindowBackgroundAppearance::Blurred,
                 ..Default::default()
             },
-            |cx| cx.new_view(|_cx| Countdown::new(8, 0)),
+            |cx| cx.new_view(|_cx| Countdown::new(args.hour, args.minute)),
         )
         .unwrap();
     });
