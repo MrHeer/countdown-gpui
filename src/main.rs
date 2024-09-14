@@ -22,7 +22,7 @@ fn main() {
                 window_background: WindowBackgroundAppearance::Blurred,
                 ..Default::default()
             },
-            |cx| cx.new_view(|_cx| Countdown::from_hm(8, 0)),
+            |cx| cx.new_view(|_cx| Countdown::new(8, 0)),
         )
         .unwrap();
     });

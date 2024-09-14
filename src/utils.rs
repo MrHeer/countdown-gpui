@@ -1,11 +1,11 @@
-use chrono::{DateTime, Duration, Local};
+use chrono::Duration;
 
-pub fn format_datetime(datetime: &DateTime<Local>) -> String {
-    format!("{}", datetime.format("%H:%M"))
+pub fn format_hm(hour: u32, minute: u32) -> String {
+    format!("{:02}:{:02}", hour, minute)
 }
 
 pub fn format_duration(duration: &Duration) -> String {
-    let hours = duration.num_hours();
-    let minutes = duration.num_minutes() % 60;
-    format!("{:02}:{:02}", hours, minutes)
+    let hour = duration.num_hours() as u32;
+    let minute = (duration.num_minutes() % 60) as u32;
+    format_hm(hour, minute)
 }
