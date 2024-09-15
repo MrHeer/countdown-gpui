@@ -9,11 +9,11 @@ use gpui::*;
 #[command(version, about, long_about = None)]
 struct Args {
     /// set hour for timer
-    #[arg(long, default_value_t = 8)]
+    #[arg(long, default_value_t = 8, value_parser = clap::value_parser!(u32).range(0..24))]
     hour: u32,
 
     /// set minute for timer
-    #[arg(long, default_value_t = 0)]
+    #[arg(long, default_value_t = 0, value_parser = clap::value_parser!(u32).range(0..60))]
     minute: u32,
 }
 
