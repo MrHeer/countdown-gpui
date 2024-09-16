@@ -1,4 +1,5 @@
 mod countdown;
+mod slider_number;
 mod utils;
 
 use clap::Parser;
@@ -19,6 +20,7 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
+    let Args { hour, minute } = args;
 
     App::new().run(move |cx: &mut AppContext| {
         settings::init(cx);
@@ -37,7 +39,7 @@ fn main() {
                 window_background: WindowBackgroundAppearance::Blurred,
                 ..Default::default()
             },
-            |cx| cx.new_view(|_cx| Countdown::new(args.hour, args.minute)),
+            |cx| cx.new_view(|cx| Countdown::new(hour, minute, cx)),
         )
         .unwrap();
     });

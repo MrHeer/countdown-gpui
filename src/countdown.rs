@@ -4,20 +4,53 @@ use chrono::{DateTime, Days, Local, TimeDelta, Timelike};
 use gpui::*;
 use ui::v_flex;
 
-use crate::utils::{format_duration, format_hm};
+use crate::{slider_number::SliderNumber, utils::format_duration};
 
 pub struct Countdown {
     hour: u32,
     minute: u32,
+    hour_slider: View<SliderNumber>,
+    minute_slider: View<SliderNumber>,
+}
+
+fn build_slider(
+    id: impl Into<ElementId>,
+    value: u32,
+    min: u32,
+    max: u32,
+    updater: impl Fn(&u32, &mut Countdown) + 'static,
+    cx: &mut ViewContext<'_, Countdown>,
+) -> View<SliderNumber> {
+    let view = cx.view().downgrade();
+    cx.new_view(|_| {
+        SliderNumber::new(id, value, min, max)
+            .on_conform(move |value, cx| {
+                view.update(cx, |this, _| {
+                    updater(value, this);
+                })
+                .ok();
+            })
+            .formatter(|value| format!("{:02}", value).into_any_element())
+    })
 }
 
 impl Countdown {
-    pub fn new(hour: u32, minute: u32) -> Self {
-        Self { hour, minute }
-    }
-
-    fn format_time(&self) -> String {
-        format_hm(self.hour, self.minute)
+    pub fn new(hour: u32, minute: u32, cx: &mut ViewContext<'_, Self>) -> Self {
+        let hour_slider = build_slider("hour", hour, 0, 23, |value, this| this.hour = *value, cx);
+        let minute_slider = build_slider(
+            "minute",
+            minute,
+            0,
+            59,
+            |value, this| this.minute = *value,
+            cx,
+        );
+        Self {
+            hour,
+            minute,
+            hour_slider,
+            minute_slider,
+        }
     }
 
     fn get_time(&self, now: &DateTime<Local>) -> DateTime<Local> {
@@ -41,7 +74,7 @@ impl Countdown {
             cx.background_executor()
                 .timer(Duration::from_secs(secs as u64))
                 .await;
-            this.update(&mut cx, |_this, cx| {
+            this.update(&mut cx, |_, cx| {
                 cx.notify();
             })
             .ok()
@@ -68,6 +101,13 @@ impl Render for Countdown {
                     .child(format_duration(&self.get_duration())),
             )
             .child("To")
-            .child(div().flex().text_2xl().child(self.format_time()))
+            .child(
+                div()
+                    .flex()
+                    .text_2xl()
+                    .child(self.hour_slider.clone())
+                    .child(":")
+                    .child(self.minute_slider.clone()),
+            )
     }
 }
