@@ -24,7 +24,7 @@ fn build_slider(
     let view = cx.view().downgrade();
     cx.new_view(|_| {
         SliderNumber::new(id, value, min, max)
-            .on_conform(move |value, cx| {
+            .on_change(move |value, cx| {
                 view.update(cx, |this, _| {
                     updater(value, this);
                 })

@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use gpui::*;
-use ui::{FluentBuilder, Tooltip};
+use ui::FluentBuilder;
 
-type ConformHandler = dyn Fn(&u32, &mut WindowContext);
+type ChangeHandler = dyn Fn(&u32, &mut WindowContext);
 type Formatter = dyn Fn(&u32) -> AnyElement;
 
 /// Used to control slider step util STEP pixels shift.
@@ -14,9 +14,9 @@ pub struct SliderNumber {
     value: u32,
     min: u32,
     max: u32,
-    conform_handler: Option<Arc<ConformHandler>>,
+    change_handler: Option<Arc<ChangeHandler>>,
     formatter: Option<Arc<Formatter>>,
-    start_value: u32,
+    start_value: Option<u32>,
     start_position: Option<Point<Pixels>>,
 }
 
@@ -27,15 +27,15 @@ impl SliderNumber {
             value,
             min,
             max,
-            conform_handler: None,
+            change_handler: None,
             formatter: None,
-            start_value: min,
+            start_value: None,
             start_position: None,
         }
     }
 
-    pub fn on_conform(mut self, handler: impl Fn(&u32, &mut WindowContext) + 'static) -> Self {
-        self.conform_handler = Some(Arc::new(handler));
+    pub fn on_change(mut self, handler: impl Fn(&u32, &mut WindowContext) + 'static) -> Self {
+        self.change_handler = Some(Arc::new(handler));
         self
     }
 
@@ -44,12 +44,13 @@ impl SliderNumber {
         self
     }
 
-    fn on_drag_handler(this: &WeakView<Self>, cx: &mut WindowContext<'_>) -> View<EmptyView> {
-        this.update(cx, |view, cx| {
-            view.start_value = view.value;
-            view.start_position = Some(cx.mouse_position());
-        })
-        .ok();
+    fn on_drag_handler(slider: &WeakView<Self>, cx: &mut WindowContext<'_>) -> View<EmptyView> {
+        slider
+            .update(cx, |this, cx| {
+                this.start_value = Some(this.value);
+                this.start_position = Some(cx.mouse_position());
+            })
+            .ok();
         cx.new_view(|_| EmptyView)
     }
 
@@ -62,43 +63,37 @@ impl SliderNumber {
             return;
         }
 
-        let position = cx.mouse_position();
         let start_y = this.start_position.unwrap().y;
+        let mut new_value = this.start_value.unwrap();
+        let position = cx.mouse_position();
         let y = position.y;
         let delta = (y - start_y) / STEP;
         let sign = delta.signum();
         let delta_value = delta.abs().floor().to_f64() as u32;
         if sign > 0. {
-            this.value = (this.start_value + delta_value).clamp(this.min, this.max);
+            new_value = (new_value + delta_value).clamp(this.min, this.max);
         } else {
-            this.value =
-                (this.start_value - delta_value.min(this.start_value)).clamp(this.min, this.max);
+            new_value = (new_value - delta_value.min(new_value)).clamp(this.min, this.max);
         }
+        if let Some(handler) = this.change_handler.clone() {
+            handler(&new_value, cx);
+        }
+        this.value = new_value;
     }
 }
 
 impl Render for SliderNumber {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
-        let conform_handler = self.conform_handler.clone();
         let formatter = self.formatter.clone();
         let view = cx.view().downgrade();
         let value = self.value;
         div()
             .id(self.id.clone())
-            .flex()
-            .px_1()
-            .tooltip(|cx| Tooltip::text("Drag to adjust, click to conform.", cx))
+            .hover(|style| style.cursor_ns_resize())
             .on_drag(self.id.clone(), move |_, cx| {
                 Self::on_drag_handler(&view, cx)
             })
             .on_drag_move(cx.listener(Self::on_drag_move_handler))
-            .when_some(conform_handler, |this, handler| {
-                this.on_mouse_down(MouseButton::Left, |_, cx| cx.prevent_default())
-                    .on_click(move |_, cx| {
-                        cx.stop_propagation();
-                        (handler)(&value, cx)
-                    })
-            })
             .when_some(formatter.clone(), |this, formatter| {
                 this.child(formatter(&value))
             })
