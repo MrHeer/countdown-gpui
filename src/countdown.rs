@@ -92,6 +92,7 @@ impl Render for Countdown {
             .gap_5()
             .size_full()
             .bg(rgba(0xffffff99))
+            .font_family("MonaspiceRn Nerd Font Mono")
             .child("After")
             .child(
                 div()
