@@ -16,21 +16,33 @@ struct Args {
     /// set minute for timer
     #[arg(long, default_value_t = 0, value_parser = clap::value_parser!(u32).range(0..60))]
     minute: u32,
+
+    /// set width for window
+    #[arg(long, default_value_t = 300.)]
+    width: f32,
+
+    /// set height for window
+    #[arg(long, default_value_t = 300.)]
+    height: f32,
 }
 
 fn main() {
     let args = Args::parse();
-    let Args { hour, minute } = args;
+    let Args {
+        hour,
+        minute,
+        width,
+        height,
+    } = args;
 
     App::new().run(move |cx: &mut AppContext| {
         settings::init(cx);
         theme::init(theme::LoadThemes::JustBase, cx);
-        let window_size = size(px(300.0), px(300.0));
+        let window_size = size(px(width), px(height));
         let bounds = Bounds::centered(None, window_size, cx);
         cx.open_window(
             WindowOptions {
                 window_bounds: Some(WindowBounds::Windowed(bounds)),
-                window_min_size: Some(window_size),
                 window_background: WindowBackgroundAppearance::Blurred,
                 titlebar: None,
                 ..Default::default()
