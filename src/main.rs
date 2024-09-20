@@ -24,6 +24,10 @@ struct Args {
     /// set height for window
     #[arg(long, default_value_t = 300.)]
     height: f32,
+
+    /// popup window
+    #[arg(long, default_value_t = false)]
+    popup: bool,
 }
 
 fn main() {
@@ -33,6 +37,7 @@ fn main() {
         minute,
         width,
         height,
+        popup,
     } = args;
 
     App::new().run(move |cx: &mut AppContext| {
@@ -45,6 +50,11 @@ fn main() {
                 window_bounds: Some(WindowBounds::Windowed(bounds)),
                 window_background: WindowBackgroundAppearance::Blurred,
                 titlebar: None,
+                kind: if popup {
+                    WindowKind::PopUp
+                } else {
+                    WindowKind::Normal
+                },
                 ..Default::default()
             },
             |cx| cx.new_view(|cx| Countdown::new(hour, minute, cx)),
