@@ -31,12 +31,8 @@ fn main() {
             WindowOptions {
                 window_bounds: Some(WindowBounds::Windowed(bounds)),
                 window_min_size: Some(window_size),
-                titlebar: Some(TitlebarOptions {
-                    title: Some("Countdown".into()),
-                    appears_transparent: true,
-                    traffic_light_position: None,
-                }),
                 window_background: WindowBackgroundAppearance::Blurred,
+                titlebar: None,
                 ..Default::default()
             },
             |cx| cx.new_view(|cx| Countdown::new(hour, minute, cx)),
